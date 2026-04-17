@@ -1,0 +1,76 @@
+function [pval] = cimpval_DEPRECATED(cimVal, M, varargin)
+%CIMPVAL - computes the p-value of a given CIM statistic and the number of
+%samples upon which that CIM statistic was calculated against independence
+%hypothesis
+% Inputs:
+%  cimVal - the CIM measure
+%  M - the sample size used to compute this CIM measure
+%  varargin{1} - type of data for which this CIM metric was computed,
+%                continuous, discrete, hybrid1, or hybrid2.  continuous is
+%                default
+% values are hard-coded, look at the script cim_runPower which has a
+% execution-cell inside it that generates these vectors!
+        
+alphaVecContinuous = [9.0945 9.2333 9.6349 9.9561 9.8710 9.5267 9.7412 10.2604 9.4023 ...
+    10.0466 10.2257 9.9979 10.1340 10.1976 10.3548 10.1194 10.3254 10.1581 9.5839 ...
+    10.7199 10.0632 10.2748 10.4863 10.1246 9.9006 10.6914 10.5068 9.9672];
+alphaVecHybrid1 = [7.1811    8.4563    8.2068    8.5017    8.2683    8.8906    8.6579    8.2676 ...
+    7.8350    8.6069    8.4556    8.2416    8.9488    9.1856    8.4698    8.5286 ...
+    8.6593    9.1725    8.0899    9.0201    8.6134    8.6462    9.1519    9.1696 ...
+    8.9390    8.7880    8.5507    8.5047];
+alphaVecHybrid2 = [7.3403    7.7886    8.0445    8.7074    7.8581    8.5397    9.1524    8.6802 ...
+    8.2706    8.6268    8.8787    9.1951    8.1645    8.8587    8.6549    9.2208 ...
+    8.4699    8.1096    8.5372    8.8027    9.0820    9.3735    9.6053    8.5874 ...
+    9.0946    8.5148    8.9333    8.7751];
+alphaVecDiscrete = [6.3942    7.0607    7.1343    7.3192    6.8685    7.0392    7.6839    7.2612 ...
+    7.5491    7.5585    7.7010    7.9782    7.1253    8.1201    7.9741    7.3768 ...
+    7.4585    7.1445    7.4659    7.4063    8.1749    7.9466    7.5308    8.2379 ...
+    7.8482    7.7773    7.7565    8.0734];
+
+betaVecContinuous = [59.3412 97.6509 125.4931 151.0389 172.3463 179.3066 202.2684 226.0662 ...
+  227.5710  256.1734  319.6914  359.5712  409.3719  451.8074  491.3175  531.2197 ...
+  567.7999  582.2239  567.6348  670.0540  669.9211  699.5031  741.3621  743.8227 ...
+  739.6073  832.8695  827.2394  811.6194];
+betaVecHybrid1 = [40.0949   80.7234   98.0258  121.8185  135.2325  160.0315  172.1920  172.8704 ...
+  179.9712  204.5705  250.8261  284.3886  346.6038  390.2519  390.7705  422.2980 ...
+  457.2310  503.4075  467.4776  537.0917  556.7663  566.3984  627.9156  649.9016 ...
+  638.8533  656.1395  657.8473  675.4363];
+betaVecHybrid2 = [41.7222   74.5303   99.0462  126.2643  127.6572  156.7508  181.2531  184.2241 ...
+  188.5390  208.7234  268.4529  312.2170  319.9418  376.0115  395.9998  456.2487 ...
+  450.2124  448.7193  507.0298  530.6421  575.1699  611.2221  659.8503  597.4070 ...
+  656.4957  634.1733  684.4808  685.4739];
+betaVecDiscrete = [36.7043   61.0062   78.0577   94.5138   98.2509  112.8976  133.6557  134.1424 ...
+  149.0703  157.2541  199.2009  238.2430  240.6686  298.9087  317.4873  316.4364 ...
+  343.5722  344.0493  380.5936  390.4354  448.9795  454.7721  449.3158  494.6862 ...
+  483.2754  497.0027  517.9086  551.5400];
+
+if(length(varargin)>=1)
+    selector = varargin{1};
+else
+    selector = 'continuous';
+end
+
+if(strcmpi(selector, 'continuous'))
+    alphaVec = alphaVecContinuous;
+    betaVec = betaVecContinuous;
+elseif(strcmpi(selector, 'hybrid1'))
+    alphaVec = alphaVecHybrid1;
+    betaVec = betaVecHybrid1;
+elseif(strcmpi(selector, 'hybrid2'))
+    alphaVec = alphaVecHybrid2;
+    betaVec = betaVecHybrid2;
+else    % assume discrete
+    alphaVec = alphaVecDiscrete;
+    betaVec = betaVecDiscrete;
+end
+
+M_vec = 100:100:1000;
+M_vec = [M_vec 1500:500:10000];
+
+% iterpolate for each value of k, mu, sigma for the given M
+alpha = interp1(M_vec, alphaVec, M, 'spline');
+beta = interp1(M_vec, betaVec, M, 'spline');
+
+pval = 1-betacdf(cimVal, alpha, beta);
+
+end
